@@ -1,0 +1,78 @@
+<html>
+  <head>
+    <script type="text/javascript"
+        src="http://maps.google.com/maps/api/js?v=3.2&sensor=false&region=US">
+    </script>
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      var map, layer;
+      var geocoder = new google.maps.Geocoder();
+      var tableid = 297050;
+
+      google.load('visualization', '1');
+
+      function initialize() {
+
+        var options = {
+          center: new google.maps.LatLng(37.5,-122.23),
+          zoom: 10,
+          mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        map = new google.maps.Map(document.getElementById('map_canvas'), options);
+
+        layer = new google.maps.FusionTablesLayer({
+          query: {
+            select: "'Delivery Zone'",
+            from: tableid
+          },
+          map: map
+        });
+
+        window.onkeypress = enterSubmit;
+      }
+
+      function enterSubmit() {
+        if(event.keyCode==13) {
+          geocode();
+        }
+      }
+
+      function geocode() {
+        geocoder.geocode({address: document.getElementById('address').value }, findStore);
+      }
+
+      function findStore(results, status) {
+        if (status == google.maps.GeocoderStatus.OK) {        
+          var coordinate = results[0].geometry.location;
+
+          marker = new google.maps.Marker({
+            map: map,
+            layer: layer,
+            animation: google.maps.Animation.DROP,
+            position: coordinate
+          });
+
+          var queryText = encodeURIComponent("SELECT 'Store Name' FROM " + tableid +
+              " WHERE ST_INTERSECTS('Delivery Zone', CIRCLE(LATLNG(" +
+              coordinate.lat() + "," + coordinate.lng() + "), 0.001))");
+          var query = new google.visualization.Query(
+              'http://www.google.com/fusiontables/gvizdata?tq=' + queryText);
+          query.send(showStoreName);
+        }
+      }
+
+      function showStoreName(response) {
+        if(response.getDataTable().getNumberOfRows()) {
+          var name = response.getDataTable().getValue(0, 0);
+          alert('Store name: ' + name);
+        }
+      }
+    </script>
+  </head>
+  <body onload="initialize()">
+    <input type="text" value="Palo Alto, CA" id="address">
+    <input type="button" onclick="geocode()" value="Go">
+    <div id="map_canvas" style="width:940; height:800"></div>
+  </body>
+</html>
