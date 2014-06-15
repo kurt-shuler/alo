@@ -38,6 +38,15 @@ $ git fetch origin
 $ git checkout gh-pages
 </code></pre>
 
+<ul>
+{% for post in site.posts %}
+    <li>
+        <div class="date">{{ post.date | date_to_string }}</div>
+        <a href="{{ site.prefix  }}{{ post.url }}">{{ post.title }}</a>
+    </li>
+{% endfor %}
+</ul>
+
 {% highlight ruby %}
 def foo
   puts 'foo'
